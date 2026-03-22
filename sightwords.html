@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sight Words · 100</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card-bg: #1a1a26;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --accent3: #5cf8d0;
+    --text: #f0eeff;
+    --muted: #6b6880;
+    --border: rgba(124, 92, 252, 0.2);
+    --glow: 0 0 60px rgba(124, 92, 252, 0.25);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 20%, rgba(124,92,252,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(252,92,125,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 50% 50%, rgba(92,248,208,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    width: 100%;
+  }
+
+  .header h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .progress-bar-wrap {
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    border-radius: 99px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .counter {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 8px;
+    letter-spacing: 0.15em;
+  }
+
+  /* Card scene */
+  .card-scene {
+    width: 100%;
+    perspective: 1200px;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .card-wrapper {
+    position: relative;
+    width: 100%;
+    height: 280px;
+  }
+
+  .card {
+    position: absolute;
+    inset: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    box-shadow: var(--glow), 0 24px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+    transition: transform 0.08s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+    will-change: transform;
+  }
+
+  .card:active { cursor: grabbing; }
+
+  /* Card shimmer */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -60%;
+    left: -60%;
+    width: 220%;
+    height: 220%;
+    background: conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg,
+      rgba(124,92,252,0.04) 60deg,
+      transparent 120deg,
+      rgba(92,248,208,0.03) 180deg,
+      transparent 240deg,
+      rgba(252,92,125,0.04) 300deg,
+      transparent 360deg
+    );
+    animation: shimmer 8s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes shimmer {
+    to { transform: rotate(360deg); }
+  }
+
+  .word-display {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(52px, 14vw, 80px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text) 0%, rgba(240,238,255,0.7) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    line-height: 1;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .word-num {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+  }
+
+  /* Swipe hint arrows */
+  .hint-left, .hint-right {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,255,255,0.08);
+    font-size: 28px;
+    pointer-events: none;
+    transition: color 0.3s ease;
+  }
+  .hint-left { left: 16px; }
+  .hint-right { right: 16px; }
+
+  /* Feedback overlay */
+  .feedback-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 72px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .feedback-overlay.correct {
+    background: rgba(92,248,208,0.15);
+    opacity: 1;
+  }
+
+  .feedback-overlay.wrong {
+    background: rgba(252,92,125,0.15);
+    opacity: 1;
+  }
+
+  /* Auto-play ring */
+  .auto-ring {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
+    display: none;
+  }
+
+  .auto-ring.active { display: block; }
+
+  .auto-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .auto-ring circle {
+    fill: none;
+    stroke: var(--accent3);
+    stroke-width: 2.5;
+    stroke-dasharray: 75.4;
+    stroke-dashoffset: 75.4;
+    animation: ring-fill 3s linear forwards;
+    border-radius: 50%;
+  }
+
+  @keyframes ring-fill {
+    to { stroke-dashoffset: 0; }
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+    font-size: 22px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .btn:hover {
+    transform: scale(1.1);
+    border-color: var(--accent);
+    box-shadow: 0 0 20px rgba(124,92,252,0.3), 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .btn:active { transform: scale(0.95); }
+
+  .btn.speaker { --btn-accent: var(--accent3); }
+  .btn.play    { --btn-accent: var(--accent); width: 76px; height: 76px; font-size: 26px; }
+
+  /* Nav hint */
+  .nav-hint {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-align: center;
+    opacity: 0.6;
+  }
+
+  /* Card transition animations */
+  @keyframes slide-in-right {
+    from { transform: translateX(100%) scale(0.9); opacity: 0; }
+    to   { transform: translateX(0) scale(1); opacity: 1; }
+  }
+
+  @keyframes slide-in-left {
+    from { transform: translateX(-100%) scale(0.9); opacity: 0; }
+    to   { transform: translateX(0) scale(1); opacity: 1; }
+  }
+
+  @keyframes slide-out-left {
+    from { transform: translateX(0) scale(1); opacity: 1; }
+    to   { transform: translateX(-100%) scale(0.9); opacity: 0; }
+  }
+
+  @keyframes slide-out-right {
+    from { transform: translateX(0) scale(1); opacity: 1; }
+    to   { transform: translateX(100%) scale(0.9); opacity: 0; }
+  }
+
+  .card.anim-slide-in-right  { animation: slide-in-right  0.35s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+  .card.anim-slide-in-left   { animation: slide-in-left   0.35s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+  .card.anim-slide-out-left  { animation: slide-out-left  0.25s ease forwards; }
+  .card.anim-slide-out-right { animation: slide-out-right 0.25s ease forwards; }
+
+  /* Done screen */
+  .done-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    width: 100%;
+    box-shadow: var(--glow);
+  }
+
+  .done-screen.show { display: flex; }
+
+  .done-icon { font-size: 64px; }
+
+  .done-screen h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent3), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .done-screen p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+  .restart-btn {
+    margin-top: 8px;
+    padding: 14px 32px;
+    background: var(--accent);
+    border: none;
+    border-radius: 99px;
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 0 24px rgba(124,92,252,0.4);
+  }
+
+  .restart-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 36px rgba(124,92,252,0.6);
+  }
+
+  @media (max-width: 380px) {
+    .word-display { font-size: 48px; }
+    .btn { width: 56px; height: 56px; font-size: 20px; }
+    .btn.play { width: 68px; height: 68px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <h1>Sight Words · 100</h1>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progressBar" style="width:1%"></div>
+    </div>
+    <div class="counter" id="counter">1 / 100</div>
+  </div>
+
+  <div class="card-scene" id="cardScene">
+    <div class="card-wrapper">
+      <div class="card" id="card">
+        <span class="word-num" id="wordNum">#01</span>
+        <div class="word-display" id="wordDisplay">the</div>
+        <div class="hint-left">‹</div>
+        <div class="hint-right">›</div>
+        <div class="feedback-overlay" id="feedbackOverlay"></div>
+        <div class="auto-ring" id="autoRing">
+          <svg viewBox="0 0 28 28">
+            <circle cx="14" cy="14" r="11" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn speaker" id="btnSpeaker" title="발음 듣기">🔊</button>
+    <button class="btn play"    id="btnPlay"    title="자동 재생">▶</button>
+  </div>
+
+  <div class="nav-hint">← 스와이프로 카드 이동 →</div>
+
+  <div class="done-screen" id="doneScreen">
+    <div class="done-icon">🎉</div>
+    <h2>완료!</h2>
+    <p>사이트워드 100개를 모두 학습했어요.<br>꾸준히 반복하면 더 빨리 외울 수 있어요!</p>
+    <button class="restart-btn" id="restartBtn">다시 시작하기</button>
+  </div>
+
+</div>
+
+<script>
+const WORDS = [
+  "the","of","and","a","to","in","is","you","that","it",
+  "he","was","for","on","are","as","with","his","they","I",
+  "at","be","this","have","from","or","one","had","by","word",
+  "but","not","what","all","were","we","when","your","can","said",
+  "there","use","an","each","which","she","do","how","their","if",
+  "will","up","other","about","out","many","then","them","these","so",
+  "some","her","would","make","like","him","into","time","has","look",
+  "two","more","write","go","see","number","no","way","could","people",
+  "my","than","first","water","been","call","who","oil","its","now",
+  "find","long","down","day","did","get","come","made","may","part"
+];
+
+let current = 0;
+let isAutoPlay = false;
+let autoTimer = null;
+let isAnimating = false;
+
+const card         = document.getElementById('card');
+const wordDisplay  = document.getElementById('wordDisplay');
+const wordNum      = document.getElementById('wordNum');
+const progressBar  = document.getElementById('progressBar');
+const counter      = document.getElementById('counter');
+const btnSpeaker   = document.getElementById('btnSpeaker');
+const btnPlay      = document.getElementById('btnPlay');
+const feedbackOverlay = document.getElementById('feedbackOverlay');
+const autoRing     = document.getElementById('autoRing');
+const doneScreen   = document.getElementById('doneScreen');
+const restartBtn   = document.getElementById('restartBtn');
+const cardScene    = document.getElementById('cardScene');
+
+function hideFeedback() {
+  feedbackOverlay.textContent = '';
+  feedbackOverlay.className = 'feedback-overlay';
+}
+
+function updateCard() {
+  const word = WORDS[current];
+  wordDisplay.textContent = word;
+  wordNum.textContent = '#' + String(current + 1).padStart(2, '0');
+  const pct = ((current + 1) / WORDS.length) * 100;
+  progressBar.style.width = pct + '%';
+  counter.textContent = (current + 1) + ' / ' + WORDS.length;
+  hideFeedback();
+}
+
+function animateCardTransition(direction, callback) {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  const outClass = direction === 'next' ? 'anim-slide-out-left' : 'anim-slide-out-right';
+  const inClass  = direction === 'next' ? 'anim-slide-in-right' : 'anim-slide-in-left';
+
+  card.classList.add(outClass);
+
+  setTimeout(() => {
+    card.classList.remove(outClass);
+    callback();
+    card.classList.add(inClass);
+    setTimeout(() => {
+      card.classList.remove(inClass);
+      isAnimating = false;
+    }, 360);
+  }, 260);
+}
+
+function goNext() {
+  if (current >= WORDS.length - 1) {
+    showDone();
+    return;
+  }
+  animateCardTransition('next', () => {
+    current++;
+    updateCard();
+  });
+}
+
+function goPrev() {
+  if (current <= 0) return;
+  animateCardTransition('prev', () => {
+    current--;
+    updateCard();
+  });
+}
+
+function showDone() {
+  stopAutoPlay();
+  stopMic();
+  cardScene.style.display = 'none';
+  doneScreen.classList.add('show');
+}
+
+function showFeedback(type) {
+  feedbackOverlay.textContent = type === 'correct' ? '✅' : '❌';
+  feedbackOverlay.className = 'feedback-overlay ' + type;
+  setTimeout(hideFeedback, 600);
+}
+
+// ── SPEAKER ──────────────────────────────────────────
+function speak(word) {
+  const utter = new SpeechSynthesisUtterance(word);
+  utter.lang = 'en-US';
+  utter.rate = 0.85;
+  utter.pitch = 1.05;
+
+  // prefer a native-sounding English voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    v.lang.startsWith('en') && (v.name.includes('Samantha') || v.name.includes('Karen') ||
+    v.name.includes('Daniel') || v.name.includes('Google US') || v.name.includes('Alex'))
+  ) || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utter.voice = preferred;
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+
+btnSpeaker.addEventListener('click', () => {
+  speak(WORDS[current]);
+  btnSpeaker.classList.add('active');
+  setTimeout(() => btnSpeaker.classList.remove('active'), 600);
+});
+
+// ── AUTO PLAY ─────────────────────────────────────────
+function startAutoPlay() {
+  isAutoPlay = true;
+  btnPlay.textContent = '⏸';
+  btnPlay.classList.add('active');
+  scheduleNext();
+}
+
+function scheduleNext() {
+  if (!isAutoPlay) return;
+  speak(WORDS[current]);
+
+  // 링 애니메이션: circle을 새로 교체해서 매번 처음부터 재생
+  const svg = autoRing.querySelector('svg');
+  const oldCircle = autoRing.querySelector('circle');
+  if (oldCircle) oldCircle.remove();
+  const newCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  newCircle.setAttribute('cx', '14');
+  newCircle.setAttribute('cy', '14');
+  newCircle.setAttribute('r', '11');
+  svg.appendChild(newCircle);
+  autoRing.classList.add('active');
+
+  autoTimer = setTimeout(() => {
+    if (!isAutoPlay) return;
+    if (current >= WORDS.length - 1) {
+      stopAutoPlay();
+      showDone();
+      return;
+    }
+    animateCardTransition('next', () => {
+      current++;
+      updateCard();
+    });
+    setTimeout(scheduleNext, 380);
+  }, 3000);
+}
+
+function stopAutoPlay() {
+  isAutoPlay = false;
+  clearTimeout(autoTimer);
+  autoTimer = null;
+  btnPlay.textContent = '▶';
+  btnPlay.classList.remove('active');
+  autoRing.classList.remove('active');
+}
+
+btnPlay.addEventListener('click', () => {
+  if (isAutoPlay) stopAutoPlay();
+  else startAutoPlay();
+});
+
+// ── SWIPE / DRAG ──────────────────────────────────────
+let dragStartX = null;
+let dragging = false;
+const SWIPE_THRESHOLD = 60;
+
+function onPointerDown(e) {
+  dragStartX = e.touches ? e.touches[0].clientX : e.clientX;
+  dragging = true;
+}
+
+function onPointerMove(e) {
+  if (!dragging || dragStartX === null) return;
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
+  const dx = x - dragStartX;
+  card.style.transform = `translateX(${dx * 0.3}px) rotate(${dx * 0.03}deg)`;
+}
+
+function onPointerUp(e) {
+  if (!dragging) return;
+  dragging = false;
+  const x = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+  const dx = x - dragStartX;
+  card.style.transform = '';
+
+  if (Math.abs(dx) > SWIPE_THRESHOLD) {
+    if (dx < 0) goNext();
+    else goPrev();
+  }
+  dragStartX = null;
+}
+
+card.addEventListener('mousedown',  onPointerDown);
+card.addEventListener('touchstart', onPointerDown, { passive: true });
+window.addEventListener('mousemove',  onPointerMove);
+window.addEventListener('touchmove',  onPointerMove, { passive: true });
+window.addEventListener('mouseup',   onPointerUp);
+window.addEventListener('touchend',  onPointerUp);
+
+// ── KEYBOARD ─────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') goNext();
+  if (e.key === 'ArrowLeft')  goPrev();
+  if (e.key === ' ')          { e.preventDefault(); speak(WORDS[current]); }
+});
+
+// ── RESTART ───────────────────────────────────────────
+restartBtn.addEventListener('click', () => {
+  current = 0;
+  doneScreen.classList.remove('show');
+  cardScene.style.display = '';
+  updateCard();
+});
+
+// Init
+speechSynthesis.getVoices(); // preload
+updateCard();
+</script>
+</body>
+</html>
